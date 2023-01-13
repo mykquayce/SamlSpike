@@ -6,4 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="ITfoxtec.Identity.Saml2" Version="4.8.2" />
+    <PackageReference Include="ITfoxtec.Identity.Saml2.MvcCore" Version="4.8.2" />
+  </ItemGroup>
+
 </Project>
