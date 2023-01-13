@@ -1,7 +1,33 @@
+using ITfoxtec.Identity.Saml2;
+using ITfoxtec.Identity.Saml2.MvcCore.Configuration;
+using ITfoxtec.Identity.Saml2.Schemas.Metadata;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+builder.Services.Configure<Saml2Configuration>(builder.Configuration.GetSection("Saml2"));
+
+builder.Services.Configure<Saml2Configuration>(saml2Configuration =>
+{
+	saml2Configuration.AllowedAudienceUris.Add(saml2Configuration.Issuer);
+
+	EntityDescriptor entityDescriptor;
+	{
+		entityDescriptor = new EntityDescriptor();
+		{
+			var uriString = builder.Configuration["Saml2:IdPMetadata"] ?? throw new Exception();
+			entityDescriptor.ReadIdPSsoDescriptorFromUrl(new Uri(uriString));
+		}
+
+		if (entityDescriptor.IdPSsoDescriptor is null) throw new Exception("IdPSsoDescriptor not loaded from metadata.");
+	}
+	saml2Configuration.SingleSignOnDestination = entityDescriptor.IdPSsoDescriptor.SingleSignOnServices.First().Location;
+	saml2Configuration.SignatureValidationCertificates.AddRange(entityDescriptor.IdPSsoDescriptor.SigningCertificates);
+});
+
+builder.Services.AddSaml2();
 
 var app = builder.Build();
 
@@ -21,5 +47,8 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapControllerRoute(
+	name: "default",
+	pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
